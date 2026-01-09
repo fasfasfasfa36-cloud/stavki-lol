@@ -233,19 +233,19 @@
         </div>
 
         <div class="experts-grid">
-            <div class="expert safe" onclick="selectExpert('Без риска')">
+            <div class="expert safe" onclick="selectExpert('без риска')">
                 <div class="icon"><i class="fas fa-shield-alt"></i></div>
                 <div class="title">Без риска</div>
             </div>
-            <div class="expert medium" onclick="selectExpert('Средний')">
+            <div class="expert medium" onclick="selectExpert('средний')">
                 <div class="icon"><i class="fas fa-balance-scale"></i></div>
                 <div class="title">Средний</div>
             </div>
-            <div class="expert risky" onclick="selectExpert('Рисковый')">
+            <div class="expert risky" onclick="selectExpert('рисковый')">
                 <div class="icon"><i class="fas fa-bolt"></i></div>
                 <div class="title">Рисковый</div>
             </div>
-            <div class="expert crazy" onclick="selectExpert('Камбек')">
+            <div class="expert crazy" onclick="selectExpert('камбек')">
                 <div class="icon"><i class="fas fa-fire"></i></div>
                 <div class="title">Камбек</div>
             </div>
@@ -309,7 +309,7 @@
                 const r = item["Результат"] || "ждём";
                 const lvl = item["Эксперт (кэф)"] ? String(item["Эксперт (кэф)"]).trim().toLowerCase() : "";
 
-                if ((expertName === null || lvl === expertName.toLowerCase()) && (r === "✅" || r === "❌")) {
+                if ((expertName === null || lvl.includes(expertName.toLowerCase())) && (r === "✅" || r === "❌")) {
                     completed++;
                     if (r === "✅") success++;
                 }
@@ -322,10 +322,10 @@
         function updateAllRates() {
             const levels = [
                 { id: 'total', name: null, title: 'Общая проходимость' },
-                { id: 'safe',   name: 'Без риска', title: 'Без риска' },
-                { id: 'medium', name: 'Средний', title: 'Средний' },
-                { id: 'risky',  name: 'Рисковый', title: 'Рисковый' },
-                { id: 'crazy',  name: 'Камбек', title: 'Камбек' }
+                { id: 'safe',   name: 'без риска', title: 'Без риска' },
+                { id: 'medium', name: 'средний', title: 'Средний' },
+                { id: 'risky',  name: 'рисковый', title: 'Рисковый' },
+                { id: 'crazy',  name: 'камбек', title: 'Камбек' }
             ];
 
             levels.forEach(({ id, name }) => {
@@ -360,7 +360,7 @@
 
             const forecast = cache.current.find(p => {
                 const val = p["Эксперт (кэф)"] ? String(p["Эксперт (кэф)"]).trim().toLowerCase() : "";
-                return val === expertName.toLowerCase();
+                return val.includes(expertName.toLowerCase());
             });
 
             const card = document.getElementById('prediction');
