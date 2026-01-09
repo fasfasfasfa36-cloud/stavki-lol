@@ -3,138 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Прогнозы от экспертов</title>
+    <title>Мои Прогнозы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="icon" href="data:,"> <!-- убирает ошибку favicon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
+        :root {
+            --bg: #0f1217;
+            --card: #1a1f2b;
+            --text: #e0e7ff;
+            --accent: #00ff9d;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #eab308;
+            --gradient1: linear-gradient(135deg, #1e40af, #3b82f6);
+            --gradient2: linear-gradient(135deg, #ea580c, #f97316);
+            --gradient3: linear-gradient(135deg, #b91c1c, #dc2626);
+            --gradient4: linear-gradient(135deg, #6d28d9, #a855f7);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
-            margin: 0;
-            padding: 20px;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        header {
             text-align: center;
+            margin-bottom: 28px;
         }
+
         h1 {
-            color: #58a6ff;
-            margin-bottom: 30px;
-            font-size: 28px;
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--accent), #00b8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
         }
-        .btn {
-            display: block;
-            width: 90%;
-            max-width: 380px;
-            margin: 15px auto;
-            padding: 18px;
-            font-size: 20px;
-            font-weight: bold;
-            color: white;
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .experts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .expert-btn {
+            padding: 20px 16px;
+            border-radius: 16px;
             border: none;
-            border-radius: 16px;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            transition: transform 0.1s;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .low-risk    { background: #2e7d32; }
-        .medium-risk { background: #f57c00; }
-        .high-risk   { background: #c62828; }
-        .crazy-risk  { background: linear-gradient(45deg, #c62828, #b71c1c); }
-        #prediction {
-            margin-top: 40px;
-            padding: 20px;
-            background: #161b22;
+
+        .expert-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); }
+        .expert-btn:active { transform: translateY(0); }
+
+        .safe   { background: var(--gradient1); }
+        .medium { background: var(--gradient2); }
+        .risky  { background: var(--gradient3); }
+        .crazy  { background: var(--gradient4); }
+
+        .prediction-card {
+            background: var(--card);
             border-radius: 16px;
-            font-size: 18px;
-            line-height: 1.5;
-            min-height: 150px;
+            padding: 20px;
+            margin: 24px 0;
+            border-left: 5px solid var(--accent);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
         }
-        .result-success { color: #4caf50; font-weight: bold; }
-        .result-fail    { color: #f44336; font-weight: bold; }
-        .result-wait    { color: #ffeb3b; font-weight: bold; }
-        small { color: #8b949e; display: block; margin-top: 20px; }
+
+        .prediction-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 12px 0;
+        }
+
+        .success { color: var(--success); }
+        .fail    { color: var(--danger); }
+        .waiting { color: var(--warning); }
+
+        .history-section {
+            margin-top: 40px;
+        }
+
+        .history-title {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: #94a3b8;
+        }
+
+        .history-item {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+
+        .history-item.success { border-left-color: var(--success); }
+        .history-item.fail    { border-left-color: var(--danger); }
+        .history-item.waiting { border-left-color: var(--warning); }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: black;
+            font-size: 1.4rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,255,157,0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        @media (min-width: 500px) {
+            .experts-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
-    <h1>Выбери эксперта ⚽</h1>
+    <header>
+        <h1>Мои Прогнозы</h1>
+        <div class="subtitle">Экспертные экспрессы с реальными коэффициентами</div>
+    </header>
 
-    <button class="btn low-risk"    onclick="showForecast(2)">Без риска (~2)</button>
-    <button class="btn medium-risk" onclick="showForecast(4)">Средний (~4)</button>
-    <button class="btn high-risk"   onclick="showForecast(8)">Рисковый (~8)</button>
-    <button class="btn crazy-risk"  onclick="showForecast(12)">Камбек (~12)</button>
+    <div id="loading" style="text-align:center; padding:40px 0; color:#94a3b8;">
+        <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>
+        Загружаем актуальные прогнозы...
+    </div>
 
-    <div id="prediction">Нажми на эксперта — получишь прогноз</div>
+    <div id="content" style="display:none;">
+        <div class="experts-grid">
+            <button class="expert-btn safe"   onclick="showExpert('~2')"><i class="fas fa-shield-alt"></i> Без риска (~2)</button>
+            <button class="expert-btn medium" onclick="showExpert('~4')"><i class="fas fa-balance-scale"></i> Средний (~4)</button>
+            <button class="expert-btn risky"  onclick="showExpert('~8')"><i class="fas fa-bolt"></i> Рисковый (~8)</button>
+            <button class="expert-btn crazy"  onclick="showExpert('~12')"><i class="fas fa-fire"></i> Камбек (~12)</button>
+        </div>
+
+        <div id="prediction-card" class="prediction-card">
+            <h2 id="expert-title"></h2>
+            <div id="match-info" style="margin:12px 0; font-size:1.1rem;"></div>
+            <div id="forecast-text" style="line-height:1.5; margin:16px 0;"></div>
+            <div id="coef-info" style="font-weight:bold; color:var(--accent); margin:12px 0;"></div>
+            <div id="status" class="status"></div>
+            <div id="comment" style="color:#94a3b8; font-style:italic; margin-top:12px;"></div>
+        </div>
+
+        <div class="history-section">
+            <h3 class="history-title">История прогнозов</h3>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="loadData()" title="Обновить">
+        <i class="fas fa-sync-alt"></i>
+    </button>
 
     <script>
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
         Telegram.WebApp.MainButton.setText("Закрыть").show().onClick(() => Telegram.WebApp.close());
 
-        // Твои прогнозы — меняй здесь сколько угодно
-        const forecasts = [
-            {
-                level: 2,
-                title: "Безопасный вариант",
-                text: "Победа фаворита с форой (0). Надёжно, как швейцарские часы.",
-                risk: "Низкий риск — почти всегда заходит",
-                result: "ждём" // потом меняй на "✅" или "❌"
-            },
-            {
-                level: 4,
-                title: "Золотая середина",
-                text: "Тотал больше 2.5 + обе команды забьют. Матч будет сочный!",
-                risk: "Средний риск, но кэф вкусный",
-                result: "ждём"
-            },
-            {
-                level: 8,
-                title: "Адреналин",
-                text: "Гости выиграют в гостях у лидера + тотал угловых больше 11.5",
-                risk: "Высокий риск — для смелых",
-                result: "ждём"
-            },
-            {
-                level: 12,
-                title: "Полный отрыв",
-                text: "Точный счёт 1:3 + первый гол после 30-й минуты + обе забьют",
-                risk: "Очень высокий риск — если зайдёт, ты легенда",
-                result: "ждём"
+        // ВСТАВЬ СВОЙ URL ОТСЮДА ↓↓↓
+        const API_URL = "AKfycbx_l1YH23vxZa5F5yygT82dLn0NF_QC83L8XCb3E9UAbhDAr4wEBb53P9BZDWal760n";
+
+        let dataCache = null;
+
+        async function loadData(silent = false) {
+            if (!silent) {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('content').style.display = 'none';
             }
-        ];
 
-        // Случайные матчи — добавляй свои
-        const matches = [
-            "Арсенал — Тоттенхэм 10.01 22:30",
-            "Ман Сити — Челси 11.01 19:00",
-            "Ливерпуль — Манчестер Юнайтед 11.01 21:45",
-            "Астон Вилла — Ньюкасл 12.01 17:00"
-        ];
+            try {
+                const res = await fetch(API_URL + '?nocache=' + Date.now());
+                dataCache = await res.json();
 
-        function showForecast(level) {
-            const forecast = forecasts.find(f => f.level === level);
-            const match = matches[Math.floor(Math.random() * matches.length)];
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
 
-            if (!forecast) {
-                document.getElementById('prediction').innerHTML = "Прогноз не найден";
+                renderHistory();
+            } catch (err) {
+                if (!silent) {
+                    document.getElementById('loading').innerHTML = 
+                        'Ошибка загрузки<br><small>Проверь интернет и URL</small>';
+                }
+                console.error(err);
+            }
+        }
+
+        function showExpert(level) {
+            if (!dataCache?.current?.length) {
+                document.getElementById('prediction-card').innerHTML = 
+                    '<p style="text-align:center;color:#94a3b8;">Прогнозы для этого уровня пока отсутствуют</p>';
                 return;
             }
 
-            let resultClass = "";
-            if (forecast.result === "✅") resultClass = "result-success";
-            else if (forecast.result === "❌") resultClass = "result-fail";
-            else resultClass = "result-wait";
+            const forecast = dataCache.current.find(f => 
+                f["Эксперт (кэф)"].includes(level)
+            );
 
-            document.getElementById('prediction').innerHTML = `
-                <h2>${forecast.title} (кэф ~${level})</h2>
-                <p><strong>Матч:</strong> ${match}</p>
-                <p>${forecast.text}</p>
-                <p><em>${forecast.risk}</em></p>
-                <p class="${resultClass}">Результат: ${forecast.result}</p>
-                <small>Прогнозы только для развлечения. Футбол — штука непредсказуемая!</small>
-            `;
+            if (!forecast) {
+                document.getElementById('prediction-card').innerHTML = 
+                    '<p style="text-align:center;color:#94a3b8;">Прогноз для этого уровня пока не готов</p>';
+                return;
+            }
+
+            const card = document.getElementById('prediction-card');
+            card.classList.remove('visible');
+
+            setTimeout(() => {
+                document.getElementById('expert-title').textContent = forecast["Эксперт (кэф)"];
+                document.getElementById('match-info').innerHTML = 
+                    `<strong>${forecast["Матч"]}</strong><br>${forecast["Дата матча"]}`;
+                document.getElementById('forecast-text').textContent = forecast["Прогноз текст"];
+                document.getElementById('coef-info').textContent = `Общий кэф ≈ ${forecast["Общий кэф"]}`;
+
+                const statusEl = document.getElementById('status');
+                const res = forecast["Результат"] || "ждём";
+                statusEl.textContent = `Результат: ${res}`;
+                statusEl.className = "status " + 
+                    (res === "✅" ? "success" : 
+                     res === "❌" ? "fail" : "waiting");
+
+                document.getElementById('comment').textContent = forecast["Комментарий"] || "";
+
+                card.classList.add('visible');
+                card.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 150);
         }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+
+            if (!dataCache?.history?.length) {
+                container.innerHTML = '<p style="text-align:center;color:#94a3b8;">История пока пустая</p>';
+                return;
+            }
+
+            dataCache.history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `history-item ${item["Результат"] === "✅" ? "success" : item["Результат"] === "❌" ? "fail" : "waiting"}`;
+
+                div.innerHTML = `
+                    <strong>${item["Матч"]} (${item["Дата матча"]})</strong><br>
+                    ${item["Эксперт (кэф)"]} — ${item["Прогноз текст"]}<br>
+                    <strong>Результат: ${item["Результат"] || "ждём"}</strong>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // Первая загрузка
+        loadData();
+
+        // Автообновление каждые 5 минут (можно убрать)
+        setInterval(() => loadData(true), 5 * 60 * 1000);
     </script>
 </body>
 </html>
