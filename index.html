@@ -100,6 +100,20 @@
         .fail    { background:rgba(239,68,68,0.2); color:var(--danger); }
         .waiting { background:rgba(234,179,8,0.2); color:var(--warning); }
 
+        .history { margin-top:48px; }
+        .history h3 { font-size:1.7rem; color:#94a3b8; margin-bottom:24px; text-align:center; }
+
+        .history-card {
+            background:rgba(15,22,38,0.6);
+            border-radius:20px;
+            padding:16px;
+            margin-bottom:12px;
+            border-left:6px solid;
+            transition:all 0.3s;
+        }
+
+        .history-card:hover { transform:translateX(8px); background:rgba(30,41,59,0.8); }
+
         .refresh {
             position:fixed;
             bottom:28px;
@@ -121,8 +135,6 @@
         }
 
         .refresh:hover { transform:scale(1.15) rotate(360deg); }
-
-        #loading { display:none; }
     </style>
 </head>
 <body>
@@ -159,9 +171,14 @@
             <div id="stat" class="status waiting">Ждём выбора...</div>
             <div id="comm" style="color:#94a3b8;margin-top:20px;"></div>
         </div>
+
+        <div class="history">
+            <h3>История прогнозов</h3>
+            <div id="hist"></div>
+        </div>
     </div>
 
-    <button class="refresh" onclick="location.reload()" title="Обновить">
+    <button class="refresh" onclick="location.reload()" title="Обновить страницу">
         <i class="fas fa-sync-alt"></i>
     </button>
 
@@ -170,12 +187,12 @@
         Telegram.WebApp.expand();
         Telegram.WebApp.MainButton.setText("Закрыть").show().onClick(() => Telegram.WebApp.close());
 
-        // Все прогнозы — прямо здесь (редактируй как хочешь)
+        // Все прогнозы и история — прямо здесь (редактируй как хочешь)
         const forecasts = {
             "без риска": {
                 expert: "Без риска",
                 match: "Хетафе - Реал Сосьедад",
-                date: "09.01.2026 23:00",
+                date: "09.01.2026 21:00",
                 text: "Обе команды играют от обороны\n«Хетафе» дома не пропускает\n«Сосьедад» на выезде редко забивает\n📊 Типичный счёт: 0:0, 0:1, 1:1",
                 kef: "1.37",
                 result: "ждём",
@@ -185,7 +202,7 @@
                 expert: "Средний",
                 match: "Хетафе - Реал Сосьедад",
                 date: "09.01.2026 21:00",
-                text: "Победа «Реал Сосьедад»\nКэф: ~2.5\nПочему заходит:\n«Сосьедад» сильнее по игре\n«Хетафе» почти не забивает\nЕсли «Сосьедад» ведёт — матч «сухой»\nСчёты: 0:1, 0:2, 1:2",
+                text: "👉 Победа «Реал Сосьедад»\nКэф: ~2.5\nПочему заходит:\n«Сосьедад» сильнее по игре\n«Хетафе» почти не забивает\nЕсли «Сосьедад» ведёт — матч «сухой»\nСчёты: 0:1, 0:2, 1:2",
                 kef: "2.35",
                 result: "ждём",
                 comment: ""
@@ -209,6 +226,26 @@
                 comment: "Высокий риск, большой кэф"
             }
         };
+
+        const history = [
+            {
+                date: "09.01.2026",
+                match: "Хетафе - Реал Сосьедад",
+                expert: "Без риска",
+                text: "т2.5М",
+                kef: "1.37",
+                result: "✅"
+            },
+            {
+                date: "08.01.2026",
+                match: "Ливерпуль - Арсенал",
+                expert: "Средний",
+                text: "Тотал больше 2.5",
+                kef: "2.10",
+                result: "❌"
+            },
+            // Добавляй новые прогнозы сюда — они будут отображаться в истории
+        ];
 
         function selectExpert(expertName) {
             const key = expertName.toLowerCase();
@@ -244,8 +281,40 @@
             }, 100);
         }
 
-        // При запуске показываем приветствие
-        document.getElementById('prediction').classList.add('visible');
+        function renderHistory() {
+            const c = document.getElementById('hist');
+            c.innerHTML = '';
+
+            if (history.length === 0) {
+                c.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;">История пока пустая</div>';
+                return;
+            }
+
+            history.forEach(it => {
+                const d = document.createElement('div');
+                const r = it.result || "ждём";
+                let cl = "waiting";
+                if (r === "✅") cl = "success";
+                if (r === "❌") cl = "fail";
+
+                d.className = `history-card ${cl}`;
+                d.innerHTML = `
+                    <div style="font-weight:700;margin-bottom:8px;">
+                        ${it.match} (${it.date})
+                    </div>
+                    <div style="color:#94a3b8;margin:8px 0;">
+                        ${it.expert} — ${it.text.replace(/\n/g, '<br>').slice(0,90)}${it.text.length > 90 ? '...' : ''}
+                    </div>
+                    <div style="font-weight:600;">
+                        Результат: ${r === "✅" ? "Зашёл ✓" : r === "❌" ? "Не зашёл ✗" : "Ждём..."}
+                    </div>
+                `;
+                c.appendChild(d);
+            });
+        }
+
+        // При запуске сразу показываем историю
+        renderHistory();
     </script>
 </body>
 </html>
