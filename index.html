@@ -233,19 +233,19 @@
         </div>
 
         <div class="experts-grid">
-            <div class="expert safe" onclick="selectExpert('без риска')">
+            <div class="expert safe" onclick="selectExpert('Без риска')">
                 <div class="icon"><i class="fas fa-shield-alt"></i></div>
                 <div class="title">Без риска</div>
             </div>
-            <div class="expert medium" onclick="selectExpert('средний')">
+            <div class="expert medium" onclick="selectExpert('Средний')">
                 <div class="icon"><i class="fas fa-balance-scale"></i></div>
                 <div class="title">Средний</div>
             </div>
-            <div class="expert risky" onclick="selectExpert('рисковый')">
+            <div class="expert risky" onclick="selectExpert('Рисковый')">
                 <div class="icon"><i class="fas fa-bolt"></i></div>
                 <div class="title">Рисковый</div>
             </div>
-            <div class="expert crazy" onclick="selectExpert('камбек')">
+            <div class="expert crazy" onclick="selectExpert('Камбек')">
                 <div class="icon"><i class="fas fa-fire"></i></div>
                 <div class="title">Камбек</div>
             </div>
@@ -278,6 +278,7 @@
         const API = "https://script.google.com/macros/s/AKfycbxosZmDeVQBS_jI9k_HmOIGXuyXpeYt6WzeY2fcQkY1Am1HcXXW09jBaHknMBZqs5qWTA/exec";
 
         let cache = null;
+        let lastShown = null; // запоминаем последний показанный эксперт
 
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
@@ -285,13 +286,22 @@
 
             try {
                 const r = await fetch(API + '?t=' + Date.now());
-                cache = await r.json();
+                const newData = await r.json();
+
+                // Только если данные изменились — обновляем
+                if (JSON.stringify(newData) !== JSON.stringify(cache)) {
+                    cache = newData;
+                    updateAllRates();
+                    renderHistory();
+
+                    // Восстанавливаем последний прогноз, если он был
+                    if (lastShown) {
+                        selectExpert(lastShown);
+                    }
+                }
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('main').style.display = 'block';
-
-                updateAllRates();
-                renderHistory();
             } catch(e) {
                 document.getElementById('loading').innerHTML = 
                     '<div style="font-size:1.4rem;color:#f87171;">Ошибка загрузки</div>' +
@@ -351,6 +361,8 @@
         }
 
         function selectExpert(expertName) {
+            lastShown = expertName; // запоминаем для восстановления
+
             if (!cache?.current?.length) {
                 document.getElementById('prediction').innerHTML = 
                     '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Нет доступных прогнозов</div>';
@@ -390,8 +402,10 @@
             document.getElementById('comm').textContent = forecast["Комментарий"] || "";
 
             card.classList.remove('visible');
-            setTimeout(() => card.classList.add('visible'), 100);
-            card.scrollIntoView({behavior:"smooth", block:"start"});
+            setTimeout(() => {
+                card.classList.add('visible');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
         }
 
         function renderHistory() {
