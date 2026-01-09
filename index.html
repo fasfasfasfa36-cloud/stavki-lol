@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои Прогнозы</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; padding:16px; }
+        h1 { text-align:center; color:#4caf50; }
+        .btn { 
+            display:block; margin:12px auto; padding:16px; font-size:20px; font-weight:bold;
+            background:#2e7d32; color:white; border:none; border-radius:12px; width:90%; max-width:380px;
+            text-align:center; cursor:pointer;
+        }
+        .btn-risk { background:#c62828; }
+        .btn-medium { background:#f57c00; }
+        .card { background:#1e1e1e; border-radius:12px; padding:16px; margin:16px 0; }
+        .history { margin-top:32px; }
+        .item { background:#2a2a2a; padding:12px; margin:8px 0; border-radius:8px; }
+        .success { color:#4caf50; font-weight:bold; }
+        .fail { color:#f44336; font-weight:bold; }
+        .waiting { color:#ffeb3b; }
+    </style>
+</head>
+<body>
+    <h1>Мои Прогнозы ⚽</h1>
+    
+    <div id="loading">Загрузка прогнозов...</div>
+    
+    <div id="current" style="display:none">
+        <h2>Актуальные прогнозы</h2>
+        <button class="btn" onclick="showExpert('~2')">Без риска (~2)</button>
+        <button class="btn btn-medium" onclick="showExpert('~4')">Средний (~4)</button>
+        <button class="btn" onclick="showExpert('~8')">Рисковый (~8)</button>
+        <button class="btn btn-risk" onclick="showExpert('~12')">Камбек (~12)</button>
+        
+        <div id="prediction" class="card"></div>
+    </div>
+
+    <div id="history" class="history card" style="display:none">
+        <h2>История прогнозов</h2>
+        <div id="history-list"></div>
+    </div>
+
+    <script>
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.MainButton.setText("Закрыть").show().onClick(() => Telegram.WebApp.close());
+
+        const API_URL = "YOUR_APPS_SCRIPT_URL";  // ← ВСТАВЬ СВОЙ URL ЗДЕСЬ !!
+
+        let allData = null;
+
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                const text = await res.text();
+                allData = JSON.parse(text);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('current').style.display = 'block';
+                document.getElementById('history').style.display = 'block';
+                
+                renderHistory();
+            } catch (e) {
+                document.getElementById('loading').innerHTML = 
+                    'Ошибка загрузки<br><small>Проверь URL в коде</small>';
+                console.error(e);
+            }
+        }
+
+        function showExpert(level) {
+            if (!allData || !allData.current) return;
+            
+            const forecast = allData.current.find(f => 
+                f["Эксперт (кэф)"].includes(level)
+            );
+
+            if (!forecast) {
+                document.getElementById('prediction').innerHTML = 
+                    `<strong>Прогноз для ${level} пока не готов</strong>`;
+                return;
+            }
+
+            const res = forecast["Результат"] || "ждём";
+            let resClass = "";
+            if (res === "✅") resClass = "success";
+            else if (res === "❌") resClass = "fail";
+            else resClass = "waiting";
+
+            document.getElementById('prediction').innerHTML = `
+                <strong>${forecast["Эксперт (кэф)"]}</strong><br>
+                <strong>${forecast["Матч"]}</strong> (${forecast["Дата матча"]})<br><br>
+                ${forecast["Прогноз текст"]}<br>
+                Кэф ≈ ${forecast["Общий кэф"]}<br><br>
+                <span class="${resClass}">Результат: ${res}</span>
+                ${forecast["Комментарий"] ? `<br><small>${forecast["Комментарий"]}</small>` : ''}
+            `;
+        }
+
+        function renderHistory() {
+            if (!allData.history || allData.history.length === 0) {
+                document.getElementById('history-list').innerHTML = "<em>История пока пустая</em>";
+                return;
+            }
+
+            let html = "";
+            allData.history.forEach(item => {
+                const res = item["Результат"] || "ждём";
+                let resClass = "";
+                if (res === "✅") resClass = "success";
+                else if (res === "❌") resClass = "fail";
+                else resClass = "waiting";
+
+                html += `
+                    <div class="item">
+                        <strong>${item["Матч"]} (${item["Дата матча"]})</strong><br>
+                        ${item["Эксперт (кэф)"]} — ${item["Прогноз текст"]}<br>
+                        <span class="${resClass}">Результат: ${res}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('history-list').innerHTML = html;
+        }
+
+        // Запуск
+        loadData();
+    </script>
+</body>
+</html>
