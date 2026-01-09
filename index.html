@@ -39,6 +39,38 @@
 
         .subtitle { color:#94a3b8; font-size:1.1rem; margin-top:8px; }
 
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: rgba(15,22,38,0.7);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(0,255,170,0.15);
+            transition: all 0.4s;
+        }
+
+        .stat-card.good { background: rgba(34,197,94,0.15); border-color: var(--success); }
+        .stat-card.warning { background: rgba(234,179,8,0.15); border-color: var(--warning); }
+        .stat-card.danger { background: rgba(239,68,68,0.15); border-color: var(--danger); }
+
+        .percent {
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: var(--accent);
+            line-height: 1;
+            margin: 8px 0;
+            text-shadow: 0 0 20px var(--glow);
+        }
+
+        .label { font-size: 1rem; color: #94a3b8; margin-bottom: 6px; }
+        .details { font-size: 0.9rem; color: #94a3b8; }
+
         .experts-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -144,6 +176,38 @@
     </header>
 
     <div id="main">
+        <div class="stats-grid">
+            <div class="stat-card" id="total-stats">
+                <div class="label">Общая проходимость</div>
+                <div id="total-percent" class="percent">—%</div>
+                <div id="total-details" class="details"></div>
+            </div>
+
+            <div class="stat-card" id="safe-stats">
+                <div class="label">Без риска</div>
+                <div id="safe-percent" class="percent">—%</div>
+                <div id="safe-details" class="details"></div>
+            </div>
+
+            <div class="stat-card" id="medium-stats">
+                <div class="label">Средний</div>
+                <div id="medium-percent" class="percent">—%</div>
+                <div id="medium-details" class="details"></div>
+            </div>
+
+            <div class="stat-card" id="risky-stats">
+                <div class="label">Рисковый</div>
+                <div id="risky-percent" class="percent">—%</div>
+                <div id="risky-details" class="details"></div>
+            </div>
+
+            <div class="stat-card" id="crazy-stats">
+                <div class="label">Камбек</div>
+                <div id="crazy-percent" class="percent">—%</div>
+                <div id="crazy-details" class="details"></div>
+            </div>
+        </div>
+
         <div class="experts-grid">
             <div class="expert safe" onclick="selectExpert('Без риска')">
                 <div class="icon"><i class="fas fa-shield-alt"></i></div>
@@ -187,12 +251,12 @@
         Telegram.WebApp.expand();
         Telegram.WebApp.MainButton.setText("Закрыть").show().onClick(() => Telegram.WebApp.close());
 
-        // Все прогнозы и история — прямо здесь (редактируй как хочешь)
+        // Актуальные прогнозы (редактируй здесь)
         const forecasts = {
             "без риска": {
                 expert: "Без риска",
                 match: "Хетафе - Реал Сосьедад",
-                date: "09.01.2026 21:00",
+                date: "09.01.2026 23:00",
                 text: "Обе команды играют от обороны\n«Хетафе» дома не пропускает\n«Сосьедад» на выезде редко забивает\n📊 Типичный счёт: 0:0, 0:1, 1:1",
                 kef: "1.37",
                 result: "ждём",
@@ -201,7 +265,7 @@
             "средний": {
                 expert: "Средний",
                 match: "Хетафе - Реал Сосьедад",
-                date: "09.01.2026 21:00",
+                date: "09.01.2026 23:00",
                 text: "👉 Победа «Реал Сосьедад»\nКэф: ~2.5\nПочему заходит:\n«Сосьедад» сильнее по игре\n«Хетафе» почти не забивает\nЕсли «Сосьедад» ведёт — матч «сухой»\nСчёты: 0:1, 0:2, 1:2",
                 kef: "2.35",
                 result: "ждём",
@@ -227,24 +291,33 @@
             }
         };
 
+        // История прогнозов (редактируй здесь — добавляй новые строки)
         const history = [
             {
-                date: "09.01.2026",
-                match: "Хетафе - Реал Сосьедад",
+                date: "08.01.2026",
+                match: "Арсенал - Ливерпуль",
                 expert: "Без риска",
-                text: "т2.5М",
-                kef: "1.37",
+                text: "Тм 3.5",
+                kef: "1.45",
                 result: "✅"
             },
             {
                 date: "08.01.2026",
-                match: "Ливерпуль - Арсенал",
+                match: "Милан - Дженоа",
                 expert: "Средний",
-                text: "Тотал больше 2.5",
-                kef: "2.10",
+                text: "Обе забьют ",
+                kef: "2",
+                result: "✅"
+            },
+            {
+                date: "08.01.2026",
+                match: "Атлетико мадрид - Реал Мадрид",
+                expert: "Рисковый",
+                text: "Ничья",
+                kef: "3.68",
                 result: "❌"
             },
-            // Добавляй новые прогнозы сюда — они будут отображаться в истории
+            // Добавляй новые прогнозы сюда
         ];
 
         function selectExpert(expertName) {
@@ -313,7 +386,44 @@
             });
         }
 
-        // При запуске сразу показываем историю
+        function updateStats() {
+            const levels = [
+                { id: 'total', name: null },
+                { id: 'safe',   name: 'без риска' },
+                { id: 'medium', name: 'средний' },
+                { id: 'risky',  name: 'рисковый' },
+                { id: 'crazy',  name: 'камбек' }
+            ];
+
+            levels.forEach(({ id, name }) => {
+                let success = 0;
+                let completed = 0;
+
+                history.forEach(item => {
+                    const r = item.result || "ждём";
+                    const lvl = item.expert.toLowerCase();
+
+                    if ((name === null || lvl.includes(name)) && (r === "✅" || r === "❌")) {
+                        completed++;
+                        if (r === "✅") success++;
+                    }
+                });
+
+                const percent = completed > 0 ? Math.round((success / completed) * 100) : 0;
+                document.getElementById(`${id}-percent`).textContent = completed > 0 ? percent + '%' : '—%';
+                document.getElementById(`${id}-details`).textContent = completed > 0 ? `${success} из ${completed}` : '(ещё нет завершённых)';
+
+                const box = document.getElementById(`${id}-stats`);
+                if (completed > 0) {
+                    box.className = 'stat-card ' + (percent >= 70 ? 'good' : percent <= 40 ? 'danger' : 'warning');
+                } else {
+                    box.className = 'stat-card';
+                }
+            });
+        }
+
+        // При запуске сразу показываем историю и статистику
+        updateStats();
         renderHistory();
     </script>
 </body>
