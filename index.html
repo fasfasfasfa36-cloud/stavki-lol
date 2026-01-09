@@ -6,7 +6,6 @@
     <title>Prognos Expert</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js"></script>
     <style>
         :root {
             --bg: #05080f;
@@ -283,7 +282,6 @@
         const API = "https://script.google.com/macros/s/AKfycbx_l1YH23vxZa5F5yygT82dLn0NF_QC83L8XCb3E9UAbhDAr4wEBb53P9BZDWal760n/exec";
 
         let cache = null;
-        const confetti = new JSConfetti();
 
         async function loadData() {
             document.getElementById('loading').style.display = 'block';
@@ -357,39 +355,44 @@
         }
 
         function selectExpert(lvl) {
-            confetti.addConfetti({
-                emojis: ['⚽','💰','🔥','🎯','💚','🏆'],
-                confettiNumber: 120,
-            });
+            // Конфетти полностью отключены — никаких лагов
 
-            if (!cache?.current?.length) return;
+            if (!cache?.current?.length) {
+                document.getElementById('prediction').innerHTML = 
+                    '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Нет доступных прогнозов</div>';
+                document.getElementById('prediction').classList.add('visible');
+                return;
+            }
 
-            const f = cache.current.find(p => String(p["Эксперт (кэф)"]).includes(lvl));
+            const forecast = cache.current.find(p => 
+                p["Эксперт (кэф)"] && String(p["Эксперт (кэф)"]).trim().includes(lvl.trim())
+            );
+
             const card = document.getElementById('prediction');
 
-            if (!f) {
-                card.innerHTML = '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Прогноз пока не готов</div>';
+            if (!forecast) {
+                card.innerHTML = '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Прогноз для этого уровня пока не готов</div>';
                 card.classList.add('visible');
                 return;
             }
 
-            const res = f["Результат"] || "ждём";
+            const res = forecast["Результат"] || "ждём";
             let cls = "status-waiting", txt = "Ждём результат...";
 
             if (res === "✅") { cls = "success"; txt = "Зашёл! ✓"; }
             if (res === "❌") { cls = "fail"; txt = "Не зашёл ✗"; }
 
-            document.getElementById('exp-title').textContent = f["Эксперт (кэф)"];
+            document.getElementById('exp-title').textContent = forecast["Эксперт (кэф)"];
             document.getElementById('match').innerHTML = 
-                `<strong>${f["Матч"] || "—"}</strong><br><span style="color:#94a3b8;">${f["Дата матча"] || "—"}</span>`;
-            document.getElementById('text').textContent = f["Прогноз текст"] || "—";
-            document.getElementById('kef').textContent = `Общий кэф ≈ ${f["Общий кэф"] || "?"}`;
+                `<strong>${forecast["Матч"] || "—"}</strong><br><span style="color:#94a3b8;">${forecast["Дата матча"] || "—"}</span>`;
+            document.getElementById('text').textContent = forecast["Прогноз текст"] || "—";
+            document.getElementById('kef').textContent = `Общий кэф ≈ ${forecast["Общий кэф"] || "?"}`;
 
             const st = document.getElementById('stat');
             st.textContent = txt;
             st.className = `status ${cls}`;
 
-            document.getElementById('comm').textContent = f["Комментарий"] || "";
+            document.getElementById('comm').textContent = forecast["Комментарий"] || "";
 
             card.classList.remove('visible');
             setTimeout(() => card.classList.add('visible'), 100);
