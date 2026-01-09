@@ -208,50 +208,46 @@
             </div>
 
             <div class="stat-card" id="safe-stats">
-                <div class="label">Без риска (~2)</div>
+                <div class="label">Без риска</div>
                 <div id="safe-percent" class="percent">—%</div>
                 <div id="safe-details" class="details"></div>
             </div>
 
             <div class="stat-card" id="medium-stats">
-                <div class="label">Средний (~4)</div>
+                <div class="label">Средний</div>
                 <div id="medium-percent" class="percent">—%</div>
                 <div id="medium-details" class="details"></div>
             </div>
 
             <div class="stat-card" id="risky-stats">
-                <div class="label">Рисковый (~8)</div>
+                <div class="label">Рисковый</div>
                 <div id="risky-percent" class="percent">—%</div>
                 <div id="risky-details" class="details"></div>
             </div>
 
             <div class="stat-card" id="crazy-stats">
-                <div class="label">Камбек (~12)</div>
+                <div class="label">Камбек</div>
                 <div id="crazy-percent" class="percent">—%</div>
                 <div id="crazy-details" class="details"></div>
             </div>
         </div>
 
         <div class="experts-grid">
-            <div class="expert safe" onclick="selectExpert('~2')">
+            <div class="expert safe" onclick="selectExpert('Без риска')">
                 <div class="icon"><i class="fas fa-shield-alt"></i></div>
                 <div class="title">Без риска</div>
-                <div class="level">кэф ~2.0</div>
             </div>
-            <div class="expert medium" onclick="selectExpert('~4')">
+            <div class="expert medium" onclick="selectExpert('Средний')">
                 <div class="icon"><i class="fas fa-balance-scale"></i></div>
                 <div class="title">Средний</div>
-                <div class="level">кэф ~4.0</div>
             </div>
-            <div class="expert risky" onclick="selectExpert('~8')">
+            <div class="expert risky" onclick="selectExpert('Рисковый')">
                 <div class="icon"><i class="fas fa-bolt"></i></div>
                 <div class="title">Рисковый</div>
-                <div class="level">кэф ~8.0</div>
             </div>
-            <div class="expert crazy" onclick="selectExpert('~12')">
+            <div class="expert crazy" onclick="selectExpert('Камбек')">
                 <div class="icon"><i class="fas fa-fire"></i></div>
                 <div class="title">Камбек</div>
-                <div class="level">кэф ~12.0</div>
             </div>
         </div>
 
@@ -303,7 +299,7 @@
             }
         }
 
-        function getRate(expertLevel = null) {
+        function getRate(expertName = null) {
             if (!cache?.history?.length) return { percent: 0, total: 0, success: 0, completed: 0 };
 
             let success = 0;
@@ -311,9 +307,9 @@
 
             cache.history.forEach(item => {
                 const r = item["Результат"] || "ждём";
-                const lvl = item["Эксперт (кэф)"] || "";
+                const lvl = item["Эксперт (кэф)"] ? String(item["Эксперт (кэф)"]).trim().toLowerCase() : "";
 
-                if ((expertLevel === null || lvl.includes(expertLevel)) && (r === "✅" || r === "❌")) {
+                if ((expertName === null || lvl === expertName.toLowerCase()) && (r === "✅" || r === "❌")) {
                     completed++;
                     if (r === "✅") success++;
                 }
@@ -325,15 +321,15 @@
 
         function updateAllRates() {
             const levels = [
-                { id: 'total', level: null, title: 'Общая проходимость' },
-                { id: 'safe',   level: '~2', title: 'Без риска (~2)' },
-                { id: 'medium', level: '~4', title: 'Средний (~4)' },
-                { id: 'risky',  level: '~8', title: 'Рисковый (~8)' },
-                { id: 'crazy',  level: '~12', title: 'Камбек (~12)' }
+                { id: 'total', name: null, title: 'Общая проходимость' },
+                { id: 'safe',   name: 'Без риска', title: 'Без риска' },
+                { id: 'medium', name: 'Средний', title: 'Средний' },
+                { id: 'risky',  name: 'Рисковый', title: 'Рисковый' },
+                { id: 'crazy',  name: 'Камбек', title: 'Камбек' }
             ];
 
-            levels.forEach(({ id, level }) => {
-                const rate = getRate(level);
+            levels.forEach(({ id, name }) => {
+                const rate = getRate(name);
                 const box = document.getElementById(`${id}-stats`);
                 const percEl = document.getElementById(`${id}-percent`);
                 const detEl = document.getElementById(`${id}-details`);
@@ -354,9 +350,7 @@
             });
         }
 
-        function selectExpert(lvl) {
-            // Конфетти полностью отключены — никаких лагов
-
+        function selectExpert(expertName) {
             if (!cache?.current?.length) {
                 document.getElementById('prediction').innerHTML = 
                     '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Нет доступных прогнозов</div>';
@@ -364,14 +358,15 @@
                 return;
             }
 
-            const forecast = cache.current.find(p => 
-                p["Эксперт (кэф)"] && String(p["Эксперт (кэф)"]).trim().includes(lvl.trim())
-            );
+            const forecast = cache.current.find(p => {
+                const val = p["Эксперт (кэф)"] ? String(p["Эксперт (кэф)"]).trim().toLowerCase() : "";
+                return val === expertName.toLowerCase();
+            });
 
             const card = document.getElementById('prediction');
 
             if (!forecast) {
-                card.innerHTML = '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Прогноз для этого уровня пока не готов</div>';
+                card.innerHTML = '<div style="text-align:center;padding:60px 0;color:#94a3b8;">Прогноз для этого эксперта пока не готов</div>';
                 card.classList.add('visible');
                 return;
             }
